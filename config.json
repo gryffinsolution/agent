@@ -1,0 +1,26 @@
+{
+    "agent": [
+		{
+			"mode":"release",
+	        "version": "3.0.0",
+			"runningIntervalSecond":600,
+			"keepingDays":60,
+			"port":42032,
+			"loadAvgLimit":500,
+			"dbPath":"agent.db",
+			"cmdRetry":2,
+			"pluginsJson":"/home/catallena7/ws-go/agent/plugins.json"
+		},
+		{
+			"mode":"debug",
+	        "version": "3.0.0",
+			"runningIntervalSecond":60,
+			"keepingDays":1,
+			"port":42032,
+			"loadAvgLimit":500,
+			"dbPath":"agent.db",
+			"cmdRetry":2,
+			"pluginsJson":"/home/catallena7/ws-go/agent/plugins_test.json"
+		}
+    ]
+}

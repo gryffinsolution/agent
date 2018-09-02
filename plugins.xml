@@ -1,0 +1,402 @@
+<?xml version="1.0" encoding="utf-8"?>
+<plugins>
+	<plugin name="CPU">
+		<path>/home/pipedpiper47/FLOG/plugins/cpu.pl</path>
+		<interval_sec>60</interval_sec>
+		<timeout_sec>10</timeout_sec>
+		<version>1.0</version>
+		<columns>
+			<column name="cpu_irq">
+				<type name="cpu_irq">float</type>
+			</column>
+			<column name="cpu_iowait">
+				<type name="cpu_iowait">float</type>
+			</column>
+			<column name="cpu_softirq">
+				<type name="cpu_softirq">float</type>
+			</column>
+			<column name="cpu_system">
+				<type name="cpu_system">float</type>
+			</column>
+			<column name="cpu_idle">
+				<type name="cpu_idle">float</type>
+			</column>
+			<column name="cpu_nice">
+				<type name="cpu_nice">float</type>
+			</column>
+			<column name="cpu_user">
+				<type name="cpu_user">float</type>
+			</column>
+		</columns>
+	</plugin>
+	<plugin name="CPU_load">
+		<path>/home/pipedpiper47/FLOG/plugins/cpuLoad.pl</path>
+		<interval_sec>300</interval_sec>
+		<timeout_sec>10</timeout_sec>
+		<version>1.0</version>
+		<columns>
+			<column name="load1">
+				<type name="load1">float</type>
+			</column>
+			<column name="load5">
+				<type name="load5">float</type>
+			</column>
+			<column name="load15">
+				<type name="load15">float</type>
+			</column>
+		</columns>
+	</plugin>
+	<plugin name="disk">
+		<path>/home/pipedpiper47/FLOG/plugins/disk.pl</path>
+		<interval_sec>300</interval_sec>
+		<timeout_sec>10</timeout_sec>
+		<version>1.0</version>
+		<columns>
+			<column name="dev_name">
+				<type name="dev_name">varchar(15)</type>
+			</column>
+			<column name="used_kbytes">
+				<type name="used_kbytes">float</type>
+			</column>
+			<column name="total_kbytes">
+				<type name="total_kbytes">float</type>
+			</column>
+			<column name="Capacity">
+				<type name="Capacity">float</type>
+			</column>
+		</columns>
+	</plugin>
+	<plugin name="agent_dbsize">
+		<path>/home/pipedpiper47/FLOG/plugins/diskFull.pl</path>
+		<interval_sec>300</interval_sec>
+		<timeout_sec>5</timeout_sec>
+		<version>1.0</version>
+		<columns>
+			<column name="usedP">
+				<type name="usedP">float</type>
+			</column>
+		</columns>
+	</plugin>
+	<plugin name="disk_IO">
+		<path>/home/pipedpiper47/FLOG/plugins/diskIO.pl</path>
+		<interval_sec>300</interval_sec>
+		<timeout_sec>10</timeout_sec>
+		<version>1.0</version>
+		<columns>
+			<column name="dev_name">
+				<type name="dev_name">varchar(15)</type>
+			</column>
+			<column name="tps">
+				<type name="tps">float</type>
+			</column>
+			<column name="kb_readPsec">
+				<type name="kb_readPsec">float</type>
+			</column>
+			<column name="kb_wrtnPsec">
+				<type name="kb_wrtnPsec">float</type>
+			</column>
+			<column name="kb_read">
+				<type name="kb_read">float</type>
+			</column>
+			<column name="kb_wrtn">
+				<type name="kb_wrtn">float</type>
+			</column>
+		</columns>
+	</plugin>
+	<plugin name="dir_usage">
+		<path>/home/pipedpiper47/FLOG/plugins/du.pl</path>
+		<interval_sec>300</interval_sec>
+		<timeout_sec>10</timeout_sec>
+		<version>1.0</version>
+		<columns>
+			<column name="dir">
+				<type name="dir">varchar(1024)</type>
+			</column>
+			<column name="kbytes">
+				<type name="kbytes">float</type>
+			</column>
+		</columns>
+	</plugin>
+	<plugin name="MEM">
+		<path>/home/pipedpiper47/FLOG/plugins/mem.pl</path>
+		<interval_sec>300</interval_sec>
+		<timeout_sec>10</timeout_sec>
+		<version>1.0</version>
+		<columns>
+			<column name="MemTotal">
+				<type name="MemTotal">float</type>
+			</column>
+			<column name="MemFree">
+				<type name="MemFree">float</type>
+			</column>
+			<column name="SwapTotal">
+				<type name="SwapTotal">float</type>
+			</column>
+			<column name="SwapFree">
+				<type name="SwapFree">float</type>
+			</column>
+			<column name="Buffers">
+				<type name="Buffers">float</type>
+			</column>
+			<column name="Cached">
+				<type name="Cached">float</type>
+			</column>
+		</columns>
+	</plugin>
+	<plugin name="network_IO">
+		<path>/home/pipedpiper47/FLOG/plugins/network.pl</path>
+		<interval_sec>300</interval_sec>
+		<timeout_sec>10</timeout_sec>
+		<version>1.0</version>
+		<columns>
+			<column name="dev_name">
+				<type name="dev_name">varchar(10)</type>
+			</column>
+			<column name="rx">
+				<type name="rx">float</type>
+			</column>
+			<column name="rx_packets">
+				<type name="rx_packets">float</type>
+			</column>
+			<column name="rx_errs">
+				<type name="rx_errs">float</type>
+			</column>
+			<column name="rx_drop">
+				<type name="rx_drop">float</type>
+			</column>
+			<column name="frame">
+				<type name="frame">float</type>
+			</column>
+			<column name="tx">
+				<type name="tx">float</type>
+			</column>
+			<column name="tx_packets">
+				<type name="tx_packets">float</type>
+			</column>
+			<column name="tx_errs">
+				<type name="tx_errs">float</type>
+			</column>
+			<column name="tx_drop">
+				<type name="tx_drop">float</type>
+			</column>
+			<column name="colls">
+				<type name="colls">float</type>
+			</column>
+		</columns>
+	</plugin>
+	<plugin name="NFS">
+		<path>/home/pipedpiper47/FLOG/plugins/nfs.pl</path>
+		<interval_sec>300</interval_sec>
+		<timeout_sec>5</timeout_sec>
+		<version>1.0</version>
+		<columns>
+			<column name="user_id">
+				<type name="user_id">varchar(30)</type>
+			</column>
+			<column name="Filer_name">
+				<type name="Filer_name">varchar(30)</type>
+			</column>
+			<column name="Data_type">
+				<type name="Data_type">varchar(20)</type>
+			</column>
+			<column name="value">
+				<type name="value">float</type>
+			</column>
+		</columns>
+	</plugin>
+	<!--<plugin name="system_info_count">
+		<path>/home/pipedpiper47/FLOG/plugins/numOfX.pl</path>
+		<interval_sec>300</interval_sec>
+		<timeout_sec>5</timeout_sec>
+		<version>1.0</version>
+		<columns>
+			<column name="No_of_process">
+				<type name="No_of_process">float</type>
+			</column>
+			<column name="No_of_openfile">
+				<type name="No_of_openfile">float</type>
+			</column>
+			<column name="No_of_users">
+				<type name="No_of_users">float</type>
+			</column>
+		</columns>
+	</plugin>-->
+	<plugin name="process_mon">
+		<path>/home/pipedpiper47/FLOG/plugins/processMon.pl</path>
+		<interval_sec>300</interval_sec>
+		<timeout_sec>10</timeout_sec>
+		<version>1.3</version>
+		<columns>
+			<column name="user_name">
+				<type name="user_name">varchar(30)</type>
+			</column>
+			<column name="pid">
+				<type name="pid">varchar(10)</type>
+			</column>
+			<column name="ppid">
+				<type name="ppid">varchar(10)</type>
+			</column>
+			<column name="pcpu">
+				<type name="pcpu">float</type>
+			</column>
+			<column name="rss">
+				<type name="rss">float</type>
+			</column>
+			<column name="vsz">
+				<type name="vsz">float</type>
+			</column>
+			<column name="elapsed_time">
+				<type name="elapsed_time">varchar(20)</type>
+			</column>
+			<column name="priority">
+				<type name="priority">float</type>
+			</column>
+			<column name="cmd">
+				<type name="cmd">varchar(100)</type>
+			</column>
+		</columns>
+	</plugin>
+	<!--<plugin name="syslog">
+		<path>/home/pipedpiper47/FLOG/plugins/syslog.pl</path>
+		<interval_sec>60</interval_sec>
+		<timeout_sec>30</timeout_sec>
+		<version>1.1</version>
+		<columns>
+			<column name="file">
+				<type name="file">varchar(1024)</type>
+			</column>
+			<column name="contents">
+				<type name="contents">varchar(1024)</type>
+			</column>
+			<column name="log_epktime">
+				<type name="log_epktime">float</type>
+			</column>
+		</columns>
+	</plugin>-->
+	<plugin name="process_cpuinfo">
+		<path>/home/pipedpiper47/FLOG/plugins/top10cpu.pl</path>
+		<interval_sec>60</interval_sec>
+		<timeout_sec>10</timeout_sec>
+		<version>1.0</version>
+		<columns>
+			<column name="user_name">
+				<type name="user_name">varchar(30)</type>
+			</column>
+			<column name="pid">
+				<type name="pid">varchar(10)</type>
+			</column>
+			<column name="ppid">
+				<type name="ppid">varchar(10)</type>
+			</column>
+			<column name="pcpu">
+				<type name="pcpu">float</type>
+			</column>
+			<column name="pmem">
+				<type name="pmem">float</type>
+			</column>
+			<column name="rss">
+				<type name="rss">float</type>
+			</column>
+			<column name="vsz">
+				<type name="vsz">float</type>
+			</column>
+			<column name="elapsed_time">
+				<type name="elapsed_time">varchar(20)</type>
+			</column>
+			<column name="priority">
+				<type name="priority">float</type>
+			</column>
+			<column name="cmd">
+				<type name="cmd">varchar(100)</type>
+			</column>
+		</columns>
+	</plugin>
+	<plugin name="process_meminfo">
+		<path>/home/pipedpiper47/FLOG/plugins/top10mem.pl</path>
+		<interval_sec>300</interval_sec>
+		<timeout_sec>10</timeout_sec>
+		<version>1.0</version>
+		<columns>
+			<column name="user_name">
+				<type name="user_name">varchar(30)</type>
+			</column>
+			<column name="pid">
+				<type name="pid">varchar(10)</type>
+			</column>
+			<column name="ppid">
+				<type name="ppid">varchar(10)</type>
+			</column>
+			<column name="pcpu">
+				<type name="pcpu">float</type>
+			</column>
+			<column name="pmem">
+				<type name="pmem">float</type>
+			</column>
+			<column name="rss">
+				<type name="rss">float</type>
+			</column>
+			<column name="vsz">
+				<type name="vsz">float</type>
+			</column>
+			<column name="elapsed_time">
+				<type name="elapsed_time">varchar(20)</type>
+			</column>
+			<column name="priority">
+				<type name="priority">float</type>
+			</column>
+			<column name="cmd">
+				<type name="cmd">varchar(100)</type>
+			</column>
+		</columns>
+	</plugin>
+	<plugin name="Host_Info">
+		<path>/home/pipedpiper47/FLOG/plugins/hostInfo.pl</path>
+		<interval_sec>60</interval_sec>
+		<timeout_sec>60</timeout_sec>
+		<version>1.0</version>
+		<columns>
+			<column name="OS">
+				<type name="OS">varchar(200)</type>
+			</column>
+			<column name="CPU">
+				<type name="CPU">varchar(200)</type>
+			</column>
+			<column name="Clock_Speed">
+				<type name="Clock_Speed">varchar(200)</type>
+			</column>
+			<column name="MEMORY">
+				<type name="MEMORY">varchar(200)</type>
+			</column>
+			<column name="DISK">
+				<type name="DISK">varchar(200)</type>
+			</column>
+			<column name="SWAP">
+				<type name="SWAP">varchar(200)</type>
+			</column>
+			<column name="KERNAL">
+				<type name="KERNAL">varchar(200)</type>
+			</column>
+			<column name="Net_Type">
+				<type name="Net_Type">varchar(200)</type>
+			</column>
+			<column name="Socket_No">
+				<type name="Socket_No">varchar(200)</type>
+			</column>
+			<column name="Core_No">
+				<type name="Core_No">varchar(200)</type>
+			</column>
+			<column name="Physical_Core_No">
+				<type name="Physical_Core_No">varchar(200)</type>
+			</column>
+			<column name="HTT_on">
+				<type name="HTT_on">varchar(200)</type>
+			</column>
+			<column name="UP_DAYS">
+				<type name="UP_DAYS">float</type>
+			</column>
+			<column name="LDAP">
+				<type name="LDAP">varchar(100)</type>
+			</column>
+		</columns>
+	</plugin>
+</plugins>
