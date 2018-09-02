@@ -461,14 +461,104 @@ func GetMetrics(db *sql.DB, epTime string) string {
 	retString := ""
 
 	var time int64
-	var cpu_irq float64
-	var cpu_nice float64
-	var cpu_softirq float64
-	var cpu_system float64
-	var cpu_iowait float64
-	var cpu_user float64
+	var cpuIrq float64
+	var cpuNice float64
+	var cpuSoftirq float64
+	var cpuSystem float64
+	var cpuIowait float64
+	var cpuUser float64
 
-	sql_cpu :="SELECT STRFTIME('%s',DATETIME(TIME,'unixepoch')) TIME
+	sqlCpu := "SELECT STRFTIME('%s',DATETIME(TIME,'unixepoch')) TIME,CPU_IRQ,CPU_NICE,CPU_SOFTIRQ,CPU_SYSTEM,CPU_IOWAIT,CPU_USER FROM CPU WHERE TIME>=" + epTime
+	rowsCpu, errCpu := db.Query(sqlCpu)
+	if errCpu != nil {
+		log.Fatal("sqlCpuError=" + sqlCpu)
+	}
+	log.Println("sqlCpuNormal=" + sqlCpu)
+	defer rowsCpu.Close()
+	for rowsCpu.Next() {
+		errScan := rowsCpu.Scan(&time, &cpuIrq, &cpuNice, &cpuSoftirq, &cpuSystem, &cpuIowait, &cpuUser)
+		if errScan != nil {
+			log.Fatal(errScan)
+		}
+		retString += strconv.FormatInt(time, 10)
+		retString += ",,"
+		retString += strconv.FormatFloat(cpuIrq, 'f', 2, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(cpuNice, 'f', 2, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(cpuSoftirq, 'f', 2, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(cpuSystem, 'f', 2, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(cpuIowait, 'f', 2, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(cpuUser, 'f', 2, 64)
+		retString += "\n"
+	}
+	log.Print("cpuMsg=", retString)
+
+	retString += "-FLOG-CPU-"
+
+	var load1 float64
+	var load5 float64
+	var load15 float64
+
+	sqlCpuLoad := "SELECT STRFTIME('%s',DATETIME(TIME,'unixepoch')) TIME,LOAD1,LOAD5,LOAD15 FROM CPU_LOAD WHERE TIME>=" + epTime
+	rowsCpuLoad, errCpuLoad := db.Query(sqlCpuLoad)
+	if errCpuLoad != nil {
+		log.Fatal("sqlCpuLoadError=" + sqlCpuLoad)
+	}
+	log.Println("sqlCpuLoadNormal" + slqCpuLoad)
+	defer rowsCpuLoad.Next()
+	for rowsCpuLoad.Next() {
+		errScan := rowsCpuLoad.Scan(&time, &load1, &load5, &load15)
+		if errScan != nil {
+			log.Fatal(errScan)
+		}
+		retString += strconv.FormatInt(time, 10)
+		retString += ",,"
+		retString += strconv.FormatFloat(load1, 'f', 2, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(load5, 'f', 2, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(load15, 'f', 2, 64)
+		retString += "\n"
+	}
+	log.Print("cpuLoadMsg=", retString)
+
+	retString += "-FLOG-CPULOAD-"
+
+	var memTotal float64
+	var swapTotal float64
+	var memFree float64
+	var buffers float64
+	var swapFree float64
+	var cached float64
+	sqlMem := "SELECT STRFTIME('%s',DATETIME(TIME,'unixepoch')) TIME,MEMTOTAL,SWAPTOTAL,MEMFREE,BUFFERS,CACHED FROM MEM WHERE TIME>=" + epTime
+	rowsMem, errMem := db.Query(sqlCpuLoad)
+	if errMem != nil {
+		log.Fatal("sqlMemError=" + sqlCpuLoad)
+	}
+	log.Println("sqlMemNormal" + slqCpuLoad)
+	defer rowsMem.Next()
+	for rowsMem.Next() {
+		errScan := rowsMem.Scan(&time, &memTotal, &swapTotal, &memFree, &buffers, &swapFree, &cached)
+		if errScan != nil {
+			log.Fatal(errScan)
+		}
+		retString += strconv.FormatInt(time, 10)
+		retString += ",,"
+		retString += strconv.FormatFloat(load1, 'f', 2, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(load5, 'f', 2, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(load15, 'f', 2, 64)
+		retString += "\n"
+	}
+	log.Print("memMsg=", retString)
+
+	retString += "-FLOG-MEM-"
+
 }
 
 //DROP TABLE IF EXISTS AGENT_EKimkhVENT ;CREATE TABLE AGENT_EVENT (ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,  EVENT_CODE TEXT, SEVERITY TEXT, MESSAGE TEXT, TIME INTEGER64 DEFAULT (cast(strftime('%s','now') as int64)))
