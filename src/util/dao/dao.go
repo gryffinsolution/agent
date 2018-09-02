@@ -467,7 +467,6 @@ func GetMetrics(db *sql.DB, epTime string) string {
 	var cpuSystem float64
 	var cpuIowait float64
 	var cpuUser float64
-
 	sqlCpu := "SELECT STRFTIME('%s',DATETIME(TIME,'unixepoch')) TIME,CPU_IRQ,CPU_NICE,CPU_SOFTIRQ,CPU_SYSTEM,CPU_IOWAIT,CPU_USER FROM CPU WHERE TIME>=" + epTime
 	rowsCpu, errCpu := db.Query(sqlCpu)
 	if errCpu != nil {
@@ -502,7 +501,6 @@ func GetMetrics(db *sql.DB, epTime string) string {
 	var load1 float64
 	var load5 float64
 	var load15 float64
-
 	sqlCpuLoad := "SELECT STRFTIME('%s',DATETIME(TIME,'unixepoch')) TIME,LOAD1,LOAD5,LOAD15 FROM CPU_LOAD WHERE TIME>=" + epTime
 	rowsCpuLoad, errCpuLoad := db.Query(sqlCpuLoad)
 	if errCpuLoad != nil {
@@ -548,17 +546,221 @@ func GetMetrics(db *sql.DB, epTime string) string {
 		}
 		retString += strconv.FormatInt(time, 10)
 		retString += ",,"
-		retString += strconv.FormatFloat(load1, 'f', 2, 64)
+		retString += strconv.FormatFloat(memTotal, 'f', 0, 64)
 		retString += ",,"
-		retString += strconv.FormatFloat(load5, 'f', 2, 64)
+		retString += strconv.FormatFloat(swapTotal, 'f', 0, 64)
 		retString += ",,"
-		retString += strconv.FormatFloat(load15, 'f', 2, 64)
+		retString += strconv.FormatFloat(memFree, 'f', 0, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(buffers, 'f', 0, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(swapFree, 'f', 0, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(cached, 'f', 0, 64)
 		retString += "\n"
 	}
 	log.Print("memMsg=", retString)
 
 	retString += "-FLOG-MEM-"
 
+	var devName string
+	var capacity float64
+	var totalKbytes float64
+	var usedKbytes float64
+	sqlDisk := "SELECT STRFTIME('%s',DATETIME(TIME,'unixepoch')) TIME,DEV_NAME,CAPACITY,TOTAL_KBYTES,USED_KBYTES FROM DISK WHERE TIME>=" + epTime
+	rowsDisk, errDisk := db.Query(sqlDisk)
+	if errDisk != nil {
+		log.Fatal("sqlDiskError=" + sqlDisk)
+	}
+	log.Println("sqlDiskNormal" + sqlDisk)
+	defer rowsDisk.Next()
+	for rowsDisk.Next() {
+		errScan := rowsDisk.Scan(&time, &devName, &capacity, &totalKbytes, &usedKbytes)
+		if errScan != nil {
+			log.Fatal(errScan)
+		}
+		retString += strconv.FormatInt(time, 10)
+		retString += ",,"
+		retString += devName
+		retString += ",,"
+		retString += strconv.FormatFloat(capacity, 'f', 0, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(totalKbytes, 'f', 0, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(usedKbytes, 'f', 0, 64)
+		retString += "\n"
+	}
+	log.Print("diskMsg=", retString)
+
+	retString += "-FLOG-DISK-"
+
+	var kbRead float64
+	var kbReadPSec float64
+	var kbWrtn float64
+	var kbWrtnPSec float64
+	var tps float64
+	sqlDiskIo := "SELECT STRFTIME('%s',DATETIME(TIME,'unixepoch')) TIME,DEV_NAME,KB_READ,KB_READPSEC,KB_WRTN,KB_WRTNPSEC,TPS FROM DISK_IO WHERE TIME>=" + epTime
+	rowsDiskIo, errDiskIo := db.Query(sqlDiskIo)
+	if errDiskIo != nil {
+		log.Fatal("sqlDiskIoError=" + sqlDiskIo)
+	}
+	log.Println("sqlDiskIoNormal" + sqlDiskIo)
+	defer rowsDiskIo.Next()
+	for rowsDiskIo.Next() {
+		errScan := rowsDiskIo.Scan(&time, &devName, &kbRead, &kbReadPSec, &kbWrtn, &kbWrtnPSec, &tps)
+		if errScan != nil {
+			log.Fatal(errScan)
+		}
+		retString += strconv.FormatInt(time, 10)
+		retString += ",,"
+		retString += devName
+		retString += ",,"
+		retString += strconv.FormatFloat(kbRead, 'f', 0, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(kbReadPSec, 'f', 0, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(kbWrtn, 'f', 0, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(kbWrtnPSec, 'f', 0, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(tps, 'f', 0, 64)
+		retString += "\n"
+	}
+	log.Print("diskIoMsg=", retString)
+
+	retString += "-FLOG-DISK-"
+
+	var rxError float64
+	var tx float64
+	var frame float64
+	var txErrs float64
+	var colls float64
+	var txPackets float64
+	var rxPackets float64
+	var txDrop float64
+	var rx float64
+	var rxDrop float64
+	sqlNetworkIo := "SELECT STRFTIME('%s',DATETIME(TIME,'unixepoch')) TIME,DEV_NAME,RX_ERROR,TX,FRAME,TX_ERRS,COLLS,TX_PACKETS,RX_PACKETS,TX_DROP,RX,RX_DROP FROM NETWORK_IO WHERE TIME>=" + epTime
+	rowsNetworkIo, errNetworkIo := db.Query(sqlNetworkIo)
+	if errNetworkIo != nil {
+		log.Fatal("sqlNetworkIoError=" + sqlNetworkIo)
+	}
+	log.Println("sqlNetworkIoNormal" + sqlNetworkIo)
+	defer rowsNetworkIo.Next()
+	for rowsNetworkIo.Next() {
+		errScan := rowsNetworkIo.Scan(&time, &devName, &rxError, &tx, &frame, &txErrs, &colls, &txPackets, &rxPackets, &txDrop, &rxDrop)
+		if errScan != nil {
+			log.Fatal(errScan)
+		}
+		retString += strconv.FormatInt(time, 10)
+		retString += ",,"
+		retString += devName
+		retString += ",,"
+		retString += strconv.FormatFloat(rxError, 'f', 1, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(tx, 'f', 0, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(frame, 'f', 1, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(txErrs, 'f', 1, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(colls, 'f', 1, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(txPackets, 'f', 0, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(rxPackets, 'f', 0, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(txDrop, 'f', 1, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(rx, 'f', 0, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(rxDrop, 'f', 1, 64)
+		retString += "\n"
+	}
+	log.Print("networkIoMsg=", retString)
+
+	retString += "-FLOG-NETWORK-"
+
+	var pid string
+	var cmd string
+	var pcpu float64
+	var rss float64
+	var userName string
+	var vsz float64
+	sqlProcessCpu := "SELECT STRFTIME('%s',DATETIME(TIME,'unixepoch')) TIME,PID,CMD,PCPU,RSS,USER_NAME,VSZ FROM PROCESS_CPUINFO WHERE TIME>=" + epTime
+	rowsProcessCpu, errProcessCpu := db.Query(sqlProcessCpu)
+	if errProcessCpu != nil {
+		log.Fatal("sqlProcessCpuError=" + sqlProcessCpu)
+	}
+	log.Println("sqlProcessCpuNormal" + sqlProcessCpu)
+	defer rowsProcessCpu.Next()
+	for rowsProcessCpu.Next() {
+		errScan := rowsProcessCpu.Scan(&time, &pid, &cmd, &pcpu, &rss, &userName, &vsz)
+		if errScan != nil {
+			log.Fatal(errScan)
+		}
+		retString += strconv.FormatInt(time, 10)
+		retString += ",,"
+		retString += pid
+		retString += ",,"
+		retString += cmd
+		retString += ",,"
+		retString += strconv.FormatFloat(pcpu, 'f', 1, 64)
+		retString += ",,"
+		retString += strconv.FormatFloat(rss, 'f', 0, 64)
+		retString += ",,"
+		retString += userName
+		retString += ",,"
+		retString += strconv.FormatFloat(vsz, 'f', 0, 64)
+		retString += "\n"
+	}
+	log.Print("processCpuMsg=", retString)
+
+	retString += "-FLOG-PROCESS_CPU-"
+
+	var filerName string
+	var value float64
+	var dataType string
+	var userID string
+	sqlNfs := "SELECT STRFTIME('%s',DATETIME(TIME,'unixepoch')) TIME,FILER_NAME,VALUE,DATA_TYPE,USER_ID FROM NFS WHERE TIME>=" + epTime
+	rowsNfs, errNfs := db.Query(sqlNfs)
+	if errNfs != nil {
+		log.Fatal("sqlNfsError=" + sqlNfs)
+	}
+	log.Println("sqlNfsNormal" + sqlNfs)
+	defer rowsNfs.Next()
+	for rowsNfs.Next() {
+		errScan := rowsNfs.Scan(&time, &filerName, &value, &dataType, &userID)
+		if errScan != nil {
+			log.Fatal(errScan)
+		}
+		retString += strconv.FormatInt(time, 10)
+		retString += ",,"
+		retString += filerName
+		retString += ",,"
+		retString += strconv.FormatFloat(value, 'f', 1, 64)
+		retString += ",,"
+		retString += dataType
+		retString += ",,"
+		retString += userID
+		retString += "\n"
+	}
+	log.Print("nfsMsg=", retString)
+
+	retString += "-FLOG-DISK-"
+}
+
+func InsertAuto(db *sql.DB, mJobId string, cmdStr string, timeoutInt int) bool {
+
+	sql := "INSERT INTO AUTO_JOBS (MJOBID, CMD, TIMEOUT, IS_SENT) VALUES ('" + mJobId + "','" + cmdStr + "','" + strconv.Itoa(timeoutInt) + ",0)"
+	log.Println(sql)
+	_, err := db.Exec(sql)
+	if err != nil {
+		log.Println("JOB INSERT failed")
+		InsertEvent(db, "RC000", "ERROR", "mjobid "+mJobId+" insertion error")
+		return false
+	}
+	return true
 }
 
 //DROP TABLE IF EXISTS AGENT_EKimkhVENT ;CREATE TABLE AGENT_EVENT (ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,  EVENT_CODE TEXT, SEVERITY TEXT, MESSAGE TEXT, TIME INTEGER64 DEFAULT (cast(strftime('%s','now') as int64)))
