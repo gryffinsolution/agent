@@ -39,7 +39,7 @@ func main() {
 		log.SetOutput(os.Stderr)
 	}
 
-	version, runningInterval, keepingDays, port, loadAvgLimit, dbPath, cmdRetry, pluginsJson, autoMgr, err := jsonconf.GetGnrlInfo(*confFile, *isDebug)
+	version, runningInterval, keepingDays, port, loadAvgLimit, dbPath, pluginsJson, autoMgr, err := jsonconf.GetGnrlInfo4Agent(*confFile, *isDebug)
 	fmt.Println(version, runningInterval, keepingDays, port, loadAvgLimit, dbPath, pluginsJson)
 	fmt.Println(pluginsJson)
 
@@ -60,6 +60,8 @@ func main() {
 		isDbFileExist = true
 	}
 
+	log.Println(plgVersion)
+
 	dao.ChkTbls(conn, isDbFileExist, plgNames, plgColumnData)
 
 	defer dao.DisConnect(conn)
@@ -70,7 +72,7 @@ func main() {
 	go netty.StartSvr(conn, port, autoMgr)
 
 	var loopCnt int64
-	var norTime int64
+	var sleepTime int64
 	var epNow int64
 	var norTime int64
 

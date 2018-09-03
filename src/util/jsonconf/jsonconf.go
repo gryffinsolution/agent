@@ -17,7 +17,7 @@ type Agent struct {
 	Port                  int    `json:"port"`
 	LoadAvgLimit          int    `json:"loadAvgLimit"`
 	DbPath                string `json:"dbPath"`
-	CmdRetry              int    `json:"cmdRetry"`
+	AutoManager           string `json:"autoManager"`
 	PluginsJson           string `json:"pluginsJson"`
 }
 
@@ -25,7 +25,7 @@ type Agents struct {
 	Agents []Agent `json:"agent"`
 }
 
-func GetGnrlInfo(jsonConfStr string, isDebug bool) (string, int64, int, int, int, string, int, string, error) {
+func GetGnrlInfo4Agent(jsonConfStr string, isDebug bool) (string, int64, int, int, int, string, string, string, error) {
 	log.Println("confJson=", jsonConfStr)
 	jsonFile, err := os.Open(jsonConfStr)
 	if err != nil {
@@ -43,7 +43,7 @@ func GetGnrlInfo(jsonConfStr string, isDebug bool) (string, int64, int, int, int
 	var retNetPort int
 	var retLoadAvgLimit int
 	var retDbPath string
-	var retCmdRetry int
+	var retAutoManager string
 	var retPluginsFile string
 	isMatched := false
 	for i := 0; i < len(agents.Agents); i++ {
@@ -55,7 +55,7 @@ func GetGnrlInfo(jsonConfStr string, isDebug bool) (string, int64, int, int, int
 		retNetPort = agents.Agents[i].Port
 		retLoadAvgLimit = agents.Agents[i].LoadAvgLimit
 		retDbPath = agents.Agents[i].DbPath
-		retCmdRetry = agents.Agents[i].CmdRetry
+		retAutoManager = agents.Agents[i].AutoManager
 		retPluginsFile = agents.Agents[i].PluginsJson
 
 		if isDebug == true && modeFrJson == "debug" {
@@ -76,7 +76,7 @@ func GetGnrlInfo(jsonConfStr string, isDebug bool) (string, int64, int, int, int
 		log.Fatal("please check your configuration file about running (debug|release)			 mode")
 		os.Exit(1)
 	}
-	return retVersion, retRunningInterval, retKeepingDays, retNetPort, retLoadAvgLimit, retDbPath, retCmdRetry, retPluginsFile, err
+	return retVersion, retRunningInterval, retKeepingDays, retNetPort, retLoadAvgLimit, retDbPath, retPluginsFile, retAutoManager, err
 
 }
 
@@ -85,6 +85,7 @@ type Plugin struct {
 	Path         string `json:"path"`
 	IntervalSec  int    `json:"intervalSec"`
 	TimeoutSec   int    `json:"timeoutSec"`
+	Append       bool   `json:"append"`
 	Version      string `json:"version"`
 	ColumnMapStr string `json:"columns"`
 }
@@ -93,7 +94,7 @@ type Plugins struct {
 	Plugins []Plugin `json:"plugins"`
 }
 
-func GetPlgInfo(jsonPluginsConfStr string) ([]string, map[string]string, map[string]int, map[string]int, map[string]string, map[string]string) {
+func GetPlgInfo(jsonPluginsConfStr string) ([]string, map[string]string, map[string]int, map[string]int, map[string]bool, map[string]string, map[string]string) {
 	log.Println("confPluginsJson=", jsonPluginsConfStr)
 	jsonFile, err := os.Open(jsonPluginsConfStr)
 	if err != nil {
@@ -114,6 +115,8 @@ func GetPlgInfo(jsonPluginsConfStr string) ([]string, map[string]string, map[str
 	plgInterval = make(map[string]int)
 	var plgTimeout map[string]int
 	plgTimeout = make(map[string]int)
+	var plgAppend map[string]bool
+	plgAppend = make(map[string]bool)
 	var plgVersion map[string]string
 	plgVersion = make(map[string]string)
 	var plgColumnData map[string]string
@@ -129,11 +132,13 @@ func GetPlgInfo(jsonPluginsConfStr string) ([]string, map[string]string, map[str
 		plgInterval[plugins.Plugins[i].Name] = plugins.Plugins[i].IntervalSec
 		log.Println("timeoutSec:", strconv.Itoa(plugins.Plugins[i].TimeoutSec))
 		plgTimeout[plugins.Plugins[i].Name] = plugins.Plugins[i].TimeoutSec
+		log.Println("append:", plugins.Plugins[i].Append)
+		plgAppend[plugins.Plugins[i].Name] = plugins.Plugins[i].Append
 		log.Println("version:", plugins.Plugins[i].Version)
 		plgVersion[plugins.Plugins[i].Name] = plugins.Plugins[i].Version
 		log.Println("columnData:", plugins.Plugins[i].ColumnMapStr)
 		plgColumnData[plugins.Plugins[i].Name] = plugins.Plugins[i].ColumnMapStr
 	}
-	return plgNames, plgPath, plgInterval, plgTimeout, plgVersion, plgColumnData
+	return plgNames, plgPath, plgInterval, plgTimeout, plgAppend, plgVersion, plgColumnData
 
 }

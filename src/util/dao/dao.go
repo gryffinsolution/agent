@@ -133,8 +133,8 @@ func ChkTbls(db *sql.DB, isDbFileExist bool, plgNames []string, plgColumnData ma
 		log.Println("AUTO_JOBS table creating...")
 		sqlCreateTbl = "DROP TABLE IF EXISTS AUTO_JOBS ;CREATE TABLE AUTO_JOBS (MJOBID TEXT, RUN_TS TIMESTAMP DEFAULT (STRFTIME('%s','now')), END_TS TIMESTAMP, STATUS TEXT, CMD TEXT, TIMEOUT INT, IS_SENT INT, ELAPSED_TIME_SEC INT, STDOUT TEXT)"
 		log.Println("sql=", sqlCreateTbl)
-		_, err1 := db.Exec(sqlCreateTbl)
-		if err1 != nil {
+		_, err2 := db.Exec(sqlCreateTbl)
+		if err2 != nil {
 			log.Println("event table creation failed")
 			os.Exit(2)
 		}
@@ -252,7 +252,7 @@ func InitUpdateTbls(db *sql.DB, tbls []string, tblIsAppend map[string]bool, plgC
 				}
 				sqlInitUpdate := "INSERT INTO " + tbl + " (" + sqlMid + ") VALUES (" + sqlPost + ")"
 				log.Println(sqlInitUpdate)
-				_, err := db.Exec(sqlDeleteOld)
+				_, err := db.Exec(sqlInitUpdate)
 				if err != nil {
 					log.Println("old data cleaning failed")
 				}
@@ -316,7 +316,7 @@ func InsertData(db *sql.DB, pluginStr string, outstr string) bool {
 	return true
 }
 
-func UpdateDate(db *sql.DB, plugin string, outstr string) bool {
+func UpdateData(db *sql.DB, plugin string, outstr string) bool {
 	sql := "UPDATE " + plugin + " SET TIME=STRFTIME('%s','now'),LOG='" + outstr + "' WHERE ID=0"
 	log.Println(sql)
 	_, err := db.Exec(sql)
@@ -335,7 +335,7 @@ func GetStatus(db *sql.DB) string {
 	}
 	defer rows.Close()
 	var time string
-	retString = ""
+	retString := ""
 	for rows.Next() {
 		errScan := rows.Scan(&time)
 		if errScan != nil {
@@ -360,7 +360,7 @@ func GetEventData(db *sql.DB) string {
 	var eventCode string
 	var severity string
 	var message string
-	var time string
+	var time int64
 
 	retString := ""
 	for rows.Next() {
@@ -382,8 +382,8 @@ func GetEventData(db *sql.DB) string {
 	log.Print("msg=", retString)
 	sqlUpdate := "UPDATE AGENT_MGR SET LAST_SENT_EVENT_ID = " + strconv.Itoa(id) + " WHERE ID=0"
 	log.Println(sqlUpdate)
-	_, err := db.Exec(sqlUpdate)
-	if err != nil {
+	_, err1 := db.Exec(sqlUpdate)
+	if err1 != nil {
 		log.Println("LAST_UPDATED_TIMESTAMP update failed")
 	}
 	return retString
@@ -432,9 +432,9 @@ func GetHostInfo(db *sql.DB) string {
 	for rows.Next() {
 		columns, _ := rows.Columns()
 		values := make([][]byte, len(columns))
-		scanArgs := make([]interface{}, len(value))
+		scanArgs := make([]interface{}, len(values))
 
-		for i := range value {
+		for i := range values {
 			scanArgs[i] = &values[i]
 		}
 		rows.Scan(scanArgs...)
@@ -506,7 +506,7 @@ func GetMetrics(db *sql.DB, epTime string) string {
 	if errCpuLoad != nil {
 		log.Fatal("sqlCpuLoadError=" + sqlCpuLoad)
 	}
-	log.Println("sqlCpuLoadNormal" + slqCpuLoad)
+	log.Println("sqlCpuLoadNormal" + sqlCpuLoad)
 	defer rowsCpuLoad.Next()
 	for rowsCpuLoad.Next() {
 		errScan := rowsCpuLoad.Scan(&time, &load1, &load5, &load15)
@@ -533,11 +533,11 @@ func GetMetrics(db *sql.DB, epTime string) string {
 	var swapFree float64
 	var cached float64
 	sqlMem := "SELECT STRFTIME('%s',DATETIME(TIME,'unixepoch')) TIME,MEMTOTAL,SWAPTOTAL,MEMFREE,BUFFERS,CACHED FROM MEM WHERE TIME>=" + epTime
-	rowsMem, errMem := db.Query(sqlCpuLoad)
+	rowsMem, errMem := db.Query(sqlMem)
 	if errMem != nil {
-		log.Fatal("sqlMemError=" + sqlCpuLoad)
+		log.Fatal("sqlMemError=" + sqlMem)
 	}
-	log.Println("sqlMemNormal" + slqCpuLoad)
+	log.Println("sqlMemNormal" + sqlMem)
 	defer rowsMem.Next()
 	for rowsMem.Next() {
 		errScan := rowsMem.Scan(&time, &memTotal, &swapTotal, &memFree, &buffers, &swapFree, &cached)
@@ -746,8 +746,7 @@ func GetMetrics(db *sql.DB, epTime string) string {
 		retString += "\n"
 	}
 	log.Print("nfsMsg=", retString)
-
-	retString += "-FLOG-DISK-"
+	return retString
 }
 
 func InsertAuto(db *sql.DB, mJobId string, cmdStr string, timeoutInt int) bool {
@@ -761,6 +760,47 @@ func InsertAuto(db *sql.DB, mJobId string, cmdStr string, timeoutInt int) bool {
 		return false
 	}
 	return true
+}
+
+func UpdateAuto(db *sql.DB, mJobId string, stdOut string, status string, elpased_time_sec int) bool {
+	stdOut = strings.Replace(stdOut, "'", "''", -1)
+	sql := "UPDATE AUTO_JOBS SET STDOUT='" + stdOut + "',STATUS='" + status + "',ELAPSED_TIME_SEC=" + strconv.Itoa(elpased_time_sec) + ",END_TS=STRFTIME('%s','now') WHERE MJOBID='" + mJobId + "'"
+	log.Println(sql)
+	_, err := db.Exec(sql)
+	if err != nil {
+		log.Println("JOB UPDATE failed")
+		InsertEvent(db, "RC002", "ERROR", "mjobid "+mJobId+" update error")
+		return false
+	}
+	return true
+}
+
+func GetJobTimes(db *sql.DB, mJobId string) (int64, int64) {
+	sql := "SELECT STRFTIME ('%s',DATETIME(RUN_TS,'unixepoch')) RUN_TS ,STRFTIME('%s',DATETIME(END_TS,'unixepoch')) END_TS FROM AUTO_JOBS WHERE MJOBID='" + mJobId + "'"
+	rows, err := db.Query(sql)
+	if err != nil {
+		log.Fatal("sql=" + sql)
+	}
+	log.Println("sql=" + sql)
+
+	defer rows.Close()
+
+	var runTs int64
+	var endTs int64
+
+	for rows.Next() {
+		errScan := rows.Scan(&runTs, &endTs)
+		if errScan != nil {
+			log.Fatal(errScan)
+		}
+	}
+	sqlUpdate := "UPDATE AUTO_JOBS SET IS_SENT = 1 WHERE MJOBID='" + mJobId + "'"
+	log.Println(sqlUpdate)
+	_, err1 := db.Exec(sqlUpdate)
+	if err1 != nil {
+		log.Fatal("IS_SENT update failed")
+	}
+	return runTs, endTs
 }
 
 //DROP TABLE IF EXISTS AGENT_EKimkhVENT ;CREATE TABLE AGENT_EVENT (ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,  EVENT_CODE TEXT, SEVERITY TEXT, MESSAGE TEXT, TIME INTEGER64 DEFAULT (cast(strftime('%s','now') as int64)))
