@@ -87,7 +87,7 @@ func chkTbl(db *sql.DB, plgName string, plgColumnData map[string]string) bool {
 		return true
 	} else {
 		log.Println("create table")
-		sqlCreateTbl := "DROP TABLE IF EXISTS " + plgName + " ;CREATE TABLE " + plgName + " (TIME TIMESTAMP DEFAULT (STRFTIME('%s',now') ) "
+		sqlCreateTbl := "DROP TABLE IF EXISTS " + plgName + " ;CREATE TABLE " + plgName + " (TIME TIMESTAMP DEFAULT (STRFTIME('%s','now') ) "
 
 		strColumnLine := plgColumnData[plgName]
 		kvitems := strings.Split(strColumnLine, ",")
@@ -114,28 +114,28 @@ func ChkTbls(db *sql.DB, isDbFileExist bool, plgNames []string, plgColumnData ma
 
 	if !isDbFileExist { //creation tables
 		log.Println("AGENT_MGR table creating...")
-		sqlCreateTbl := "DROP TABLE IF EXISTS AGENT_MGR ;CREATE TABLE AGENT_MGR (ID INTEGER, AGENT_START_TS TIMESTAMP DEFAULT (STRFTIME('%s','now')), AGENT_LAST_TS TIMESTAMP DEFAULT (STRFTIME('%s','now')), EVT_LAST_TS TIMESTAMP DEFAULT (STRFTIME('%s','now')), AUTO_LAST_TS TIMESTAMP DEFAULT (STRFTIME('%s','now')),  LAST_SENT_EVENT_ID INTEGER, AGENT_VER TEXT, DATA_KEEPING_DAYS INTEGER, CMD_RETRY_LIMIT INTEGER, RESTART_AUTO_FLAG INT)"
+		sqlCreateTbl := "DROP TABLE IF EXISTS AGENT_MGR ;CREATE TABLE AGENT_MGR (ID INTEGER, AGENT_START_TS TIMESTAMP DEFAULT (STRFTIME('%s','now')), AGENT_LAST_TS TIMESTAMP DEFAULT (STRFTIME('%s','now')), EVT_LAST_TS TIMESTAMP DEFAULT (STRFTIME('%s','now')), AUTO_LAST_TS TIMESTAMP DEFAULT (STRFTIME('%s','now')), LAST_SENT_EVENT_ID INTEGER, AGENT_VER TEXT, DATA_KEEPING_DAYS INTEGER, CMD_RETRY_LIMIT INTEGER, RESTART_AUTO_FLAG INT)"
 		_, err := db.Exec(sqlCreateTbl)
 		if err != nil {
-			log.Println("manager table creation failed")
+			log.Println("AGENT_MGR table creation failed" + sqlCreateTbl)
 			os.Exit(2)
 		}
 
 		log.Println("AGENT_EVENT table creating...")
-		sqlCreateTbl = "DROP TABLE IF EXISTS AGENT_EVENT ;CREATE TABLE AGENT_EVENT (ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, EVENT_CODE TEXT, SEVERITY TEXT, MESSAGE TEXT, TIME TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP )"
+		sqlCreateTbl = "DROP TABLE IF EXISTS AGENT_EVENT ;CREATE TABLE AGENT_EVENT (ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, EVENT_CODE TEXT, SEVERITY TEXT, MESSAGE TEXT, TIME TIMESTAMP DEFAULT (STRFTIME('%s','now')))"
 		log.Println("sql=", sqlCreateTbl)
 		_, err1 := db.Exec(sqlCreateTbl)
 		if err1 != nil {
-			log.Println("event table creation failed")
+			log.Println("AGENT_EVENT table creation failed")
 			os.Exit(2)
 		}
 
-		log.Println("AUTO_JOBS table creating...")
+		log.Println("AUTO_JOBS creating...")
 		sqlCreateTbl = "DROP TABLE IF EXISTS AUTO_JOBS ;CREATE TABLE AUTO_JOBS (MJOBID TEXT, RUN_TS TIMESTAMP DEFAULT (STRFTIME('%s','now')), END_TS TIMESTAMP, STATUS TEXT, CMD TEXT, TIMEOUT INT, IS_SENT INT, ELAPSED_TIME_SEC INT, STDOUT TEXT)"
 		log.Println("sql=", sqlCreateTbl)
 		_, err2 := db.Exec(sqlCreateTbl)
 		if err2 != nil {
-			log.Println("event table creation failed")
+			log.Println("AUTO_JOBS table creation failed")
 			os.Exit(2)
 		}
 	}
@@ -200,7 +200,7 @@ func isAgentMgrNew(db *sql.DB) bool {
 
 func InitAgentMgr(db *sql.DB, agentVer string, dataKeepingDays int) bool {
 	if !isAgentMgrNew(db) {
-		sql := "INSERT INTO AGENT_MGR  (ID, AGENT_START_TS, AGENT_LAST_TS, AGENT_VER, DATA_KEEPING_DAYS, CMD_RETRY_LIMIT, LAST_SENT_EVENT_ID) VALUES (0, STRFTIME('%s','now'),'" + agentVer + "'," + strconv.Itoa(dataKeepingDays) + ",1,0)" //1 is running error limit
+		sql := "INSERT INTO AGENT_MGR (ID, AGENT_LAST_TS, AGENT_VER, DATA_KEEPING_DAYS, CMD_RETRY_LIMIT, LAST_SENT_EVENT_ID) VALUES (0, STRFTIME('%s','now'),'" + agentVer + "'," + strconv.Itoa(dataKeepingDays) + ",1,0)" //1 is running error limit
 		log.Println(sql)
 		_, err := db.Exec(sql)
 		if err != nil {
@@ -254,7 +254,7 @@ func InitUpdateTbls(db *sql.DB, tbls []string, tblIsAppend map[string]bool, plgC
 				log.Println(sqlInitUpdate)
 				_, err := db.Exec(sqlInitUpdate)
 				if err != nil {
-					log.Println("old data cleaning failed")
+					log.Println("sqlInitUpdate cleaning failed")
 				}
 			}
 		}
@@ -273,7 +273,7 @@ func SetLastUpdatedTime(db *sql.DB) bool {
 	return true
 }
 
-func InsertData(db *sql.DB, pluginStr string, outstr string) bool {
+func InsertData(db *sql.DB, plugin string, outstr string) bool {
 	lines := strings.Split(outstr, "\n")
 	for _, line := range lines {
 		log.Println("line=", line)
@@ -284,7 +284,7 @@ func InsertData(db *sql.DB, pluginStr string, outstr string) bool {
 		if strings.HasPrefix(line, "EVENT_CODE") {
 			preSql = preSql + "AGENT_EVENT"
 		} else {
-			preSql = preSql + pluginStr
+			preSql = preSql + plugin
 		}
 		midSql := "("
 		postSql := " VALUES ("
@@ -309,7 +309,7 @@ func InsertData(db *sql.DB, pluginStr string, outstr string) bool {
 		log.Println(sql)
 		_, err := db.Exec(sql)
 		if err != nil {
-			log.Println(pluginStr, " ", outstr, "data input failed")
+			log.Println(plugin, " ", outstr, "data input failed")
 			return false
 		}
 	}
@@ -343,7 +343,7 @@ func GetStatus(db *sql.DB) string {
 		}
 		retString += time
 	}
-	log.Println("msg=" + retString)
+	log.Println("msg=", retString)
 	return retString
 }
 
@@ -384,7 +384,7 @@ func GetEventData(db *sql.DB) string {
 	log.Println(sqlUpdate)
 	_, err1 := db.Exec(sqlUpdate)
 	if err1 != nil {
-		log.Println("LAST_UPDATED_TIMESTAMP update failed")
+		log.Fatal("LAST_UPDATED_TIMESTAMP update failed")
 	}
 	return retString
 }
@@ -506,8 +506,8 @@ func GetMetrics(db *sql.DB, epTime string) string {
 	if errCpuLoad != nil {
 		log.Fatal("sqlCpuLoadError=" + sqlCpuLoad)
 	}
-	log.Println("sqlCpuLoadNormal" + sqlCpuLoad)
-	defer rowsCpuLoad.Next()
+	log.Println("sqlCpuLoadNormal=" + sqlCpuLoad)
+	defer rowsCpuLoad.Close()
 	for rowsCpuLoad.Next() {
 		errScan := rowsCpuLoad.Scan(&time, &load1, &load5, &load15)
 		if errScan != nil {
@@ -532,13 +532,13 @@ func GetMetrics(db *sql.DB, epTime string) string {
 	var buffers float64
 	var swapFree float64
 	var cached float64
-	sqlMem := "SELECT STRFTIME('%s',DATETIME(TIME,'unixepoch')) TIME,MEMTOTAL,SWAPTOTAL,MEMFREE,BUFFERS,CACHED FROM MEM WHERE TIME>=" + epTime
+	sqlMem := "SELECT STRFTIME('%s',DATETIME(TIME,'unixepoch')) TIME,MEMTOTAL,SWAPTOTAL,MEMFREE,BUFFERS,SWAPFREE,CACHED FROM MEM WHERE TIME>=" + epTime
 	rowsMem, errMem := db.Query(sqlMem)
 	if errMem != nil {
 		log.Fatal("sqlMemError=" + sqlMem)
 	}
 	log.Println("sqlMemNormal" + sqlMem)
-	defer rowsMem.Next()
+	defer rowsMem.Close()
 	for rowsMem.Next() {
 		errScan := rowsMem.Scan(&time, &memTotal, &swapTotal, &memFree, &buffers, &swapFree, &cached)
 		if errScan != nil {
@@ -572,8 +572,8 @@ func GetMetrics(db *sql.DB, epTime string) string {
 	if errDisk != nil {
 		log.Fatal("sqlDiskError=" + sqlDisk)
 	}
-	log.Println("sqlDiskNormal" + sqlDisk)
-	defer rowsDisk.Next()
+	log.Println("sqlDiskNormal=" + sqlDisk)
+	defer rowsDisk.Close()
 	for rowsDisk.Next() {
 		errScan := rowsDisk.Scan(&time, &devName, &capacity, &totalKbytes, &usedKbytes)
 		if errScan != nil {
@@ -604,8 +604,8 @@ func GetMetrics(db *sql.DB, epTime string) string {
 	if errDiskIo != nil {
 		log.Fatal("sqlDiskIoError=" + sqlDiskIo)
 	}
-	log.Println("sqlDiskIoNormal" + sqlDiskIo)
-	defer rowsDiskIo.Next()
+	log.Println("sqlDiskIoNormal=" + sqlDiskIo)
+	defer rowsDiskIo.Close()
 	for rowsDiskIo.Next() {
 		errScan := rowsDiskIo.Scan(&time, &devName, &kbRead, &kbReadPSec, &kbWrtn, &kbWrtnPSec, &tps)
 		if errScan != nil {
@@ -628,9 +628,9 @@ func GetMetrics(db *sql.DB, epTime string) string {
 	}
 	log.Print("diskIoMsg=", retString)
 
-	retString += "-FLOG-DISK-"
+	retString += "-FLOG-DISK_IO-"
 
-	var rxError float64
+	var rxErrs float64
 	var tx float64
 	var frame float64
 	var txErrs float64
@@ -640,15 +640,15 @@ func GetMetrics(db *sql.DB, epTime string) string {
 	var txDrop float64
 	var rx float64
 	var rxDrop float64
-	sqlNetworkIo := "SELECT STRFTIME('%s',DATETIME(TIME,'unixepoch')) TIME,DEV_NAME,RX_ERROR,TX,FRAME,TX_ERRS,COLLS,TX_PACKETS,RX_PACKETS,TX_DROP,RX,RX_DROP FROM NETWORK_IO WHERE TIME>=" + epTime
+	sqlNetworkIo := "SELECT STRFTIME('%s',DATETIME(TIME,'unixepoch')) TIME,DEV_NAME,RX_ERRS,TX,FRAME,TX_ERRS,COLLS,TX_PACKETS,RX_PACKETS,TX_DROP,RX,RX_DROP FROM NETWORK_IO WHERE TIME>=" + epTime
 	rowsNetworkIo, errNetworkIo := db.Query(sqlNetworkIo)
 	if errNetworkIo != nil {
 		log.Fatal("sqlNetworkIoError=" + sqlNetworkIo)
 	}
-	log.Println("sqlNetworkIoNormal" + sqlNetworkIo)
-	defer rowsNetworkIo.Next()
+	log.Println("sqlNetworkIoNormal=" + sqlNetworkIo)
+	defer rowsNetworkIo.Close()
 	for rowsNetworkIo.Next() {
-		errScan := rowsNetworkIo.Scan(&time, &devName, &rxError, &tx, &frame, &txErrs, &colls, &txPackets, &rxPackets, &txDrop, &rxDrop)
+		errScan := rowsNetworkIo.Scan(&time, &devName, &rxErrs, &tx, &frame, &txErrs, &colls, &txPackets, &rxPackets, &txDrop, &rx, &rxDrop)
 		if errScan != nil {
 			log.Fatal(errScan)
 		}
@@ -656,7 +656,7 @@ func GetMetrics(db *sql.DB, epTime string) string {
 		retString += ",,"
 		retString += devName
 		retString += ",,"
-		retString += strconv.FormatFloat(rxError, 'f', 1, 64)
+		retString += strconv.FormatFloat(rxErrs, 'f', 1, 64)
 		retString += ",,"
 		retString += strconv.FormatFloat(tx, 'f', 0, 64)
 		retString += ",,"
@@ -692,8 +692,8 @@ func GetMetrics(db *sql.DB, epTime string) string {
 	if errProcessCpu != nil {
 		log.Fatal("sqlProcessCpuError=" + sqlProcessCpu)
 	}
-	log.Println("sqlProcessCpuNormal" + sqlProcessCpu)
-	defer rowsProcessCpu.Next()
+	log.Println("sqlProcessCpuNormal=" + sqlProcessCpu)
+	defer rowsProcessCpu.Close()
 	for rowsProcessCpu.Next() {
 		errScan := rowsProcessCpu.Scan(&time, &pid, &cmd, &pcpu, &rss, &userName, &vsz)
 		if errScan != nil {
@@ -727,8 +727,8 @@ func GetMetrics(db *sql.DB, epTime string) string {
 	if errNfs != nil {
 		log.Fatal("sqlNfsError=" + sqlNfs)
 	}
-	log.Println("sqlNfsNormal" + sqlNfs)
-	defer rowsNfs.Next()
+	log.Println("sqlNfsNormal=" + sqlNfs)
+	defer rowsNfs.Close()
 	for rowsNfs.Next() {
 		errScan := rowsNfs.Scan(&time, &filerName, &value, &dataType, &userID)
 		if errScan != nil {
@@ -751,7 +751,7 @@ func GetMetrics(db *sql.DB, epTime string) string {
 
 func InsertAuto(db *sql.DB, mJobId string, cmdStr string, timeoutInt int) bool {
 
-	sql := "INSERT INTO AUTO_JOBS (MJOBID, CMD, TIMEOUT, IS_SENT) VALUES ('" + mJobId + "','" + cmdStr + "','" + strconv.Itoa(timeoutInt) + ",0)"
+	sql := "INSERT INTO AUTO_JOBS (MJOBID, CMD, TIMEOUT, IS_SENT) VALUES ('" + mJobId + "','" + cmdStr + "'," + strconv.Itoa(timeoutInt) + ",0)"
 	log.Println(sql)
 	_, err := db.Exec(sql)
 	if err != nil {
@@ -762,9 +762,9 @@ func InsertAuto(db *sql.DB, mJobId string, cmdStr string, timeoutInt int) bool {
 	return true
 }
 
-func UpdateAuto(db *sql.DB, mJobId string, stdOut string, status string, elpased_time_sec int) bool {
+func UpdateAuto(db *sql.DB, mJobId string, stdOut string, status string, elapsed_time_sec int) bool {
 	stdOut = strings.Replace(stdOut, "'", "''", -1)
-	sql := "UPDATE AUTO_JOBS SET STDOUT='" + stdOut + "',STATUS='" + status + "',ELAPSED_TIME_SEC=" + strconv.Itoa(elpased_time_sec) + ",END_TS=STRFTIME('%s','now') WHERE MJOBID='" + mJobId + "'"
+	sql := "UPDATE AUTO_JOBS SET STDOUT='" + stdOut + "',STATUS='" + status + "',ELAPSED_TIME_SEC=" + strconv.Itoa(elapsed_time_sec) + ",END_TS=STRFTIME('%s','now') WHERE MJOBID='" + mJobId + "'"
 	log.Println(sql)
 	_, err := db.Exec(sql)
 	if err != nil {
@@ -776,7 +776,7 @@ func UpdateAuto(db *sql.DB, mJobId string, stdOut string, status string, elpased
 }
 
 func GetJobTimes(db *sql.DB, mJobId string) (int64, int64) {
-	sql := "SELECT STRFTIME ('%s',DATETIME(RUN_TS,'unixepoch')) RUN_TS ,STRFTIME('%s',DATETIME(END_TS,'unixepoch')) END_TS FROM AUTO_JOBS WHERE MJOBID='" + mJobId + "'"
+	sql := "SELECT STRFTIME ('%s',DATETIME(RUN_TS,'unixepoch')) RUN_TS, STRFTIME('%s',DATETIME(END_TS,'unixepoch')) END_TS FROM AUTO_JOBS WHERE MJOBID='" + mJobId + "'"
 	rows, err := db.Query(sql)
 	if err != nil {
 		log.Fatal("sql=" + sql)

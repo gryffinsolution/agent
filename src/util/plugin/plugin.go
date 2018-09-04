@@ -49,7 +49,7 @@ func RunPlugin(db *sql.DB, plugin string, cmdStr string, timeoutInt int, isAppen
 			return true
 		}
 	}
-	return true
+	return false
 }
 
 func RunCmd(db *sql.DB, cmdStr string, timeoutInt int) (string, string, int) {
@@ -91,7 +91,7 @@ func RunCmd(db *sql.DB, cmdStr string, timeoutInt int) (string, string, int) {
 		epEnd := time.Now().Unix()
 		elapsedTimeSec := epEnd - epStart
 		if err != nil {
-			log.Println("Non-zero exit code:", err)
+			log.Println("Non-zero exit code:", err, errstr)
 
 			//return outstr, "ERR_EXEC", int(elapsedTimeSec)
 			return errstr, "ERR_EXEC", int(elapsedTimeSec)
@@ -99,39 +99,5 @@ func RunCmd(db *sql.DB, cmdStr string, timeoutInt int) (string, string, int) {
 			return outstr, "DONE", int(elapsedTimeSec)
 		}
 	}
-	return "Abnormal.Check you agent log", "ERR_EXEC", 0
+	return "Abnormal.Check your agent log", "ERR_EXEC", 0
 }
-
-//func main() {
-//	//https://medium.com/@vCabbage/go-timeout-commands-with-os-exec-commandcontext-ba0c861ed738
-//	// We'll use ping as it will provide output and we can control how long it runs.
-//	cmd := exec.Command("ping", "-c 2", "-i 1", "8.8.8.8")
-
-//	// Use a bytes.Buffer to get the output
-//	var buf bytes.Buffer
-//	cmd.Stdout = &buf
-
-//	cmd.Start()
-
-//	// Use a channel to signal completion so we can use a select statement
-//	done := make(chan error)
-//	go func() { done <- cmd.Wait() }()
-
-//	// Start a timer
-//	timeout := time.After(1 * time.Second)
-
-//	// The select statement allows us to execute based on which channel
-//	// we get a message from first.
-//	select {
-//	case <-timeout:
-//		// Timeout happened first, kill the process and print a message.
-//		cmd.Process.Kill()
-//		fmt.Println("Command timed out")
-//	case err := <-done:
-//		// Command completed before timeout. Print output and error if it exists.
-//		fmt.Println("Output:", buf.String())
-//		if err != nil {
-//			fmt.Println("Non-zero exit code:", err)
-//		}
-//	}
-//}
