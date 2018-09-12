@@ -803,100 +803,30 @@ func GetJobTimes(db *sql.DB, mJobId string) (int64, int64) {
 	return runTs, endTs
 }
 
-//DROP TABLE IF EXISTS AGENT_EKimkhVENT ;CREATE TABLE AGENT_EVENT (ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,  EVENT_CODE TEXT, SEVERITY TEXT, MESSAGE TEXT, TIME INTEGER64 DEFAULT (cast(strftime('%s','now') as int64)))
-//insert into agent_event (id) values(1)
-//select time from agent_event
-//select  strftime('%s',time) tt from agent_event
+func GetCustomLog(db *sql.DB, table string) string {
+	sql := "SELECT STRFTIME ('%s',DATETIME(TIME,'unixepoch')) TIME,LOG FROM "+table+"
+	rows, err := db.Query(sql)
+	if err != nil {
+		log.Fatal("sql=" + sql)
+	}
+	log.Println("sql=" + sql)
+	
+	defer rows.Close()
 
-//DROP TABLE IF EXISTS AGENT_EVENT ;CREATE TABLE AGENT_EVENT (ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,  EVENT_CODE TEXT, SEVERITY TEXT, MESSAGE TEXT, time timestamp(6) default current_timestamp)
-//insert into agent_event (id) values(1)
-//select datetime(time,'localtime') localtime from agent_event
-//select strftime('%s',time) tt from agent_event where strftime('%s',time) > 1529675696
-
-//select   strftime('%s',time) test from agent_event
-
-//func main() {
-//	const dbpath = "foo.db"
-
-//	db := InitDB(dbpath)
-//	defer db.Close()
-//	CreateTable(db)
-
-//	items := []TestItem{
-//		TestItem{"1", "A", "213"},
-//		TestItem{"2", "B", "214"},
-//	}
-//	StoreItem(db, items)
-
-//	readItems := ReadItem(db)
-//	fmt.Println(readItems)
-
-//	items2 := []TestItem{
-//		TestItem{"1", "C", "215"},
-//		TestItem{"3", "D", "216"},
-//	}
-//	StoreItem(db, items2)
-
-//	readItems2 := ReadItem(db)
-//	fmt.Println(readItems2)
-//}
-
-//select distinct(server_name) from
-//(
-//	select server_name from t_server_ud where time_stamp > to_date ('2018-04-08 00:00:00','YYYY-MM-DD HH24:MI:SS')
-//	minus
-//	select server_name from t_server_ud where time_stamp < to_date ('2018-04-08 00:00:00','YYYY-MM-DD HH24:MI:SS')
-//)
-
-//type TestItem struct {
-//	Id    string
-//	Name  string
-//	Phone string
-//}
-//func StoreItem(db *sql.DB, items []TestItem) {
-//	sql_additem := `
-//    INSERT OR REPLACE INTO items(
-//        Id,
-//        Name,
-//        Phone,
-//        InsertedDatetime
-//    ) values(?, ?, ?, CURRENT_TIMESTAMP)
-//    `
-
-//	stmt, err := db.Prepare(sql_additem)
-//	if err != nil {
-//		panic(err)
-//	}
-//	defer stmt.Close()
-
-//	for _, item := range items {
-//		_, err2 := stmt.Exec(item.Id, item.Name, item.Phone)
-//		if err2 != nil {
-//			panic(err2)
-//		}
-//	}
-//}
-
-//func ReadItem(db *sql.DB) []TestItem {
-//	sql_readall := `
-//    SELECT Id, Name, Phone FROM items
-//    ORDER BY datetime(InsertedDatetime) DESC
-//    `
-
-//	rows, err := db.Query(sql_readall)
-//	if err != nil {
-//		panic(err)
-//	}
-//	defer rows.Close()
-
-//	var result []TestItem
-//	for rows.Next() {
-//		item := TestItem{}
-//		err2 := rows.Scan(&item.Id, &item.Name, &item.Phone)
-//		if err2 != nil {
-//			panic(err2)
-//		}
-//		result = append(result, item)
-//	}
-//	return result
-//}
+	var time int64
+	var logData string
+	
+	retString :=""
+	for rows.Next() {
+		errScan := rows.Scan(&time, &logData)
+		if errScan != nil {
+			log.Fatal(errScan)
+		}
+		retString += strconv.FormatInt(time,10)
+		retString += ":FLOG3:"
+		retString += logData
+		retString += "\n"
+	}
+	log.Print("msg=",retString)
+	return retString
+}

@@ -31,16 +31,6 @@ func getEvent(res http.ResponseWriter, req *http.Request) {
 	res.Write([]byte(ret))
 }
 
-//func setLastEventID(res http.ResponseWriter, req *http.Request) {
-//	log.Println("GET params were:", req.URL.Query())
-//	param1 := req.URL.Query().Get("eventID")
-//	if param1 != "" {
-//		dao.SetEventEndTimestamp(DB, param1)
-//	}
-//	log.Println(req)
-//	res.Write([]byte("fuck1"))
-//}
-
 func getHostDataAgntMgr(res http.ResponseWriter, req *http.Request) {
 	log.Println(req)
 	ret := dao.GetHostDataAgntMgr(DB)
@@ -72,7 +62,7 @@ func getMetrics(res http.ResponseWriter, req *http.Request) {
 func cmdExec(res http.ResponseWriter, req *http.Request) {
 	log.Println(req)
 	keyV := req.URL.Query().Get("key")
-	mJobId := req.URL.Query().Get("mJobId")
+	mJobId := req.URL.Query().Get("mjobid")
 	cmdStr := req.URL.Query().Get("cmd")
 	timeout := req.URL.Query().Get("timeout")
 
@@ -114,6 +104,38 @@ func cmdExec(res http.ResponseWriter, req *http.Request) {
 	res.Write([]byte(ret))
 }
 
+func getCustomLog(res http.ResponseWriter, req *http.Request) {
+	log.Println(req)
+	keyV := req.URL.Query().Get("key")
+	mJobId := req.URL.Query().Get("tbl")
+
+	var ret string
+	if keyV != "" && tbl != "" {
+		host, _ := os.Hostname()
+		log.Println("host", host)
+		keyword := "flog3" + host + tbl
+		log.Println(keyword)
+		hasher := md5.New()
+		hasher.Write([]byte(keyword))
+		strMd5 := hex.EncodeToString(hasher.Sum(nil))
+		log.Printf("strKey:", strMd5)
+		timeoutInt, err := strconv.Atoi(timeout)
+
+		if keyV == strMd5 {
+			ret = dao.GetCustomLog(DB, tbl)
+		} else {
+			ret = "error_code4"
+			log.Println("Authentification error")
+		}
+
+	} else {
+		ret = "error_code5"
+		log.Println("parameter error", keyV, tbl)
+	}
+	log.Println(ret)
+	res.Write([]byte(ret))
+}
+
 func StartSvr(db *sql.DB, port int, autoMgr string) {
 	DB = db
 	AutoMGR = autoMgr
@@ -123,6 +145,7 @@ func StartSvr(db *sql.DB, port int, autoMgr string) {
 	http.HandleFunc("/getHostDataAgntMgr", getHostDataAgntMgr)
 	http.HandleFunc("/getHostInfos", getHostInfos)
 	http.HandleFunc("/getMetrics", getMetrics)
+	http.HandleFunc("/getCustomLog", getCustomLog)
 	http.HandleFunc("/cmdExec", cmdExec)
 
 	err := http.ListenAndServe(":"+strconv.Itoa(port), nil)
