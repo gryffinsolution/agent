@@ -804,29 +804,29 @@ func GetJobTimes(db *sql.DB, mJobId string) (int64, int64) {
 }
 
 func GetCustomLog(db *sql.DB, table string) string {
-	sql := "SELECT STRFTIME ('%s',DATETIME(TIME,'unixepoch')) TIME,LOG FROM "+table+"
+	sql := "SELECT STRFTIME ('%s',DATETIME(TIME,'unixepoch')) TIME,LOG FROM " + table
 	rows, err := db.Query(sql)
 	if err != nil {
 		log.Fatal("sql=" + sql)
 	}
 	log.Println("sql=" + sql)
-	
+
 	defer rows.Close()
 
 	var time int64
 	var logData string
-	
-	retString :=""
+
+	retString := ""
 	for rows.Next() {
 		errScan := rows.Scan(&time, &logData)
 		if errScan != nil {
 			log.Fatal(errScan)
 		}
-		retString += strconv.FormatInt(time,10)
+		retString += strconv.FormatInt(time, 10)
 		retString += ":FLOG3:"
 		retString += logData
 		retString += "\n"
 	}
-	log.Print("msg=",retString)
+	log.Print("msg=", retString)
 	return retString
 }

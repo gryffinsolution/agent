@@ -47,7 +47,7 @@ func getHostInfos(res http.ResponseWriter, req *http.Request) {
 
 func getMetrics(res http.ResponseWriter, req *http.Request) {
 	log.Println(req)
-	paraDate := req.URL.Query().Get("strDate")
+	paraDate := req.URL.Query().Get("strdate")
 	var ret string
 	if paraDate != "" {
 		ret = dao.GetMetrics(DB, paraDate)
@@ -107,7 +107,7 @@ func cmdExec(res http.ResponseWriter, req *http.Request) {
 func getCustomLog(res http.ResponseWriter, req *http.Request) {
 	log.Println(req)
 	keyV := req.URL.Query().Get("key")
-	mJobId := req.URL.Query().Get("tbl")
+	tbl := req.URL.Query().Get("tbl")
 
 	var ret string
 	if keyV != "" && tbl != "" {
@@ -119,7 +119,6 @@ func getCustomLog(res http.ResponseWriter, req *http.Request) {
 		hasher.Write([]byte(keyword))
 		strMd5 := hex.EncodeToString(hasher.Sum(nil))
 		log.Printf("strKey:", strMd5)
-		timeoutInt, err := strconv.Atoi(timeout)
 
 		if keyV == strMd5 {
 			ret = dao.GetCustomLog(DB, tbl)
@@ -140,13 +139,13 @@ func StartSvr(db *sql.DB, port int, autoMgr string) {
 	DB = db
 	AutoMGR = autoMgr
 
-	http.HandleFunc("/getStatus", getStatus)
-	http.HandleFunc("/getEvent", getEvent)
-	http.HandleFunc("/getHostDataAgntMgr", getHostDataAgntMgr)
-	http.HandleFunc("/getHostInfos", getHostInfos)
-	http.HandleFunc("/getMetrics", getMetrics)
-	http.HandleFunc("/getCustomLog", getCustomLog)
-	http.HandleFunc("/cmdExec", cmdExec)
+	http.HandleFunc("/getstatus", getStatus)
+	http.HandleFunc("/getevent", getEvent)
+	http.HandleFunc("/gethostdataagntmgr", getHostDataAgntMgr)
+	http.HandleFunc("/gethostinfos", getHostInfos)
+	http.HandleFunc("/getmetrics", getMetrics)
+	http.HandleFunc("/getcustomlog", getCustomLog)
+	http.HandleFunc("/cmdexec", cmdExec)
 
 	err := http.ListenAndServe(":"+strconv.Itoa(port), nil)
 	if err != nil {
