@@ -380,11 +380,13 @@ func GetEventData(db *sql.DB) string {
 		retString += "\n"
 	}
 	log.Print("msg=", retString)
-	sqlUpdate := "UPDATE AGENT_MGR SET LAST_SENT_EVENT_ID = " + strconv.Itoa(id) + " WHERE ID=0"
-	log.Println(sqlUpdate)
-	_, err1 := db.Exec(sqlUpdate)
-	if err1 != nil {
-		log.Fatal("LAST_UPDATED_TIMESTAMP update failed")
+	if len(retString) && id > 0 {
+		sqlUpdate := "UPDATE AGENT_MGR SET LAST_SENT_EVENT_ID = " + strconv.Itoa(id) + " WHERE ID=0"
+		log.Println(sqlUpdate)
+		_, err1 := db.Exec(sqlUpdate)
+		if err1 != nil {
+			log.Fatal("LAST_UPDATED_TIMESTAMP update failed")
+		}
 	}
 	return retString
 }
